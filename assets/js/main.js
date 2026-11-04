@@ -279,6 +279,19 @@ function initProjectModal() {
    7. CONTACT FORM & EMAIL COPYING
    ========================================== */
 function initContactInteractions() {
+  // Check if visitor was redirected back after successful submission
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.has('sent') || urlParams.has('status')) {
+    setTimeout(() => {
+      showToast('Thank you! Your message has been sent to Rutu.', 'fa-check-circle');
+    }, 600);
+    // Clean URL without triggering page reload
+    if (window.history && window.history.replaceState) {
+      const cleanUrl = window.location.protocol + '//' + window.location.host + window.location.pathname + '#contact';
+      window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
+    }
+  }
+
   // Copy email button
   const copyBtn = document.getElementById('copy-email-btn');
   if (copyBtn) {
@@ -288,74 +301,14 @@ function initContactInteractions() {
     });
   }
 
-  // Contact form submission with FormSubmit AJAX backend
+  // Contact form native submission (reliable across all browsers & no popups)
   const contactForm = document.getElementById('contact-form');
   const submitBtn = document.getElementById('submit-form-btn');
   if (contactForm && submitBtn) {
-    contactForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const name = document.getElementById('sender-name').value.trim();
-      const email = document.getElementById('sender-email').value.trim();
-      const subject = document.getElementById('email-subject').value.trim();
-      const message = document.getElementById('email-message').value.trim();
-
-      if (!name || !email || !message) {
-        showToast('Please fill in all required fields.', 'fa-exclamation-circle');
-        return;
-      }
-
-      // Email validation regex
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        showToast('Please enter a valid email address.', 'fa-exclamation-circle');
-        return;
-      }
-
-      // Button loading state
-      const originalBtnHTML = submitBtn.innerHTML;
+    contactForm.addEventListener('submit', () => {
+      // Let the browser submit the form natively to FormSubmit
       submitBtn.disabled = true;
       submitBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i><span>Sending message...</span>';
-
-      try {
-        const response = await fetch('https://formsubmit.co/ajax/rutuvekariya136@gmail.com', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
-          body: JSON.stringify({
-            name: name,
-            email: email,
-            _subject: subject || `New Inquiry from Portfolio: ${name}`,
-            message: message,
-            _template: 'table'
-          })
-        });
-
-        const data = await response.json();
-
-        if (response.ok && (data.success === 'true' || data.success === true)) {
-          showToast('Message sent! It has been delivered to your inbox.', 'fa-paper-plane');
-          submitBtn.innerHTML = '<i class="fas fa-check"></i><span>Message Sent!</span>';
-          contactForm.reset();
-        } else if (data.message && data.message.toLowerCase().includes('activate')) {
-          showToast('Activation email sent! Please check your inbox and click activate.', 'fa-envelope-open-text');
-          submitBtn.innerHTML = '<i class="fas fa-envelope"></i><span>Check Email to Activate</span>';
-        } else {
-          showToast('Message sent successfully!', 'fa-paper-plane');
-          submitBtn.innerHTML = '<i class="fas fa-check"></i><span>Message Sent!</span>';
-          contactForm.reset();
-        }
-      } catch (err) {
-        console.warn('Form submission notice:', err);
-        showToast('Message delivered! You can also email rutuvekariya136@gmail.com directly.', 'fa-paper-plane');
-        contactForm.reset();
-      } finally {
-        setTimeout(() => {
-          submitBtn.disabled = false;
-          submitBtn.innerHTML = originalBtnHTML;
-        }, 4000);
-      }
     });
   }
 }
