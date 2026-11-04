@@ -279,36 +279,73 @@ function initProjectModal() {
    7. CONTACT FORM & EMAIL COPYING
    ========================================== */
 function initContactInteractions() {
-  // Check if visitor was redirected back after successful submission
-  const urlParams = new URLSearchParams(window.location.search);
-  if (urlParams.has('sent') || urlParams.has('status')) {
-    setTimeout(() => {
-      showToast('Thank you! Your message has been sent to Rutu.', 'fa-check-circle');
-    }, 600);
-    // Clean URL without triggering page reload
-    if (window.history && window.history.replaceState) {
-      const cleanUrl = window.location.protocol + '//' + window.location.host + window.location.pathname + '#contact';
-      window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
-    }
-  }
+  const targetEmail = 'rutuvekariya136@gmail.com';
 
-  // Copy email button
+  // 1. Copy email button
   const copyBtn = document.getElementById('copy-email-btn');
   if (copyBtn) {
     copyBtn.addEventListener('click', () => {
-      const email = 'rutuvekariya136@gmail.com';
-      copyToClipboard(email, 'Email copied to clipboard!');
+      copyToClipboard(targetEmail, 'Email copied to clipboard!');
     });
   }
 
-  // Contact form native submission (reliable across all browsers & no popups)
-  const contactForm = document.getElementById('contact-form');
-  const submitBtn = document.getElementById('submit-form-btn');
-  if (contactForm && submitBtn) {
-    contactForm.addEventListener('submit', () => {
-      // Let the browser submit the form natively to FormSubmit
-      submitBtn.disabled = true;
-      submitBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i><span>Sending message...</span>';
+  // Form helper: validate and extract values
+  function getFormData() {
+    const name = document.getElementById('sender-name').value.trim();
+    const email = document.getElementById('sender-email').value.trim();
+    const subject = document.getElementById('email-subject').value.trim() || `Portfolio Inquiry from ${name || 'Visitor'}`;
+    const message = document.getElementById('email-message').value.trim();
+
+    if (!name || !email || !message) {
+      showToast('Please fill in your name, email, and message.', 'fa-exclamation-circle');
+      return null;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      showToast('Please enter a valid email address.', 'fa-exclamation-circle');
+      return null;
+    }
+
+    const formattedBody = `Hi Rutu,\n\n${message}\n\n---\nFrom: ${name}\nEmail: ${email}`;
+    return { name, email, subject, formattedBody };
+  }
+
+  // 2. Send via Web Gmail (100% reliable, zero popups, zero server dependencies)
+  const gmailBtn = document.getElementById('send-gmail-btn');
+  if (gmailBtn) {
+    gmailBtn.addEventListener('click', () => {
+      const data = getFormData();
+      if (!data) return;
+
+      const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(targetEmail)}&su=${encodeURIComponent(data.subject)}&body=${encodeURIComponent(data.formattedBody)}`;
+      window.open(gmailUrl, '_blank');
+      showToast('Opening Gmail draft...', 'fa-paper-plane');
+    });
+  }
+
+  // 3. Send via Default Mail App (Synchronous user click, never blocked)
+  const mailAppBtn = document.getElementById('send-mailapp-btn');
+  if (mailAppBtn) {
+    mailAppBtn.addEventListener('click', () => {
+      const data = getFormData();
+      if (!data) return;
+
+      const mailtoLink = `mailto:${targetEmail}?subject=${encodeURIComponent(data.subject)}&body=${encodeURIComponent(data.formattedBody)}`;
+      window.location.href = mailtoLink;
+      showToast('Opening default mail app...', 'fa-envelope');
+    });
+  }
+
+  // 4. Copy Message & Recipient
+  const copyMessageBtn = document.getElementById('copy-message-btn');
+  if (copyMessageBtn) {
+    copyMessageBtn.addEventListener('click', () => {
+      const data = getFormData();
+      if (!data) return;
+
+      const fullDraft = `To: ${targetEmail}\nSubject: ${data.subject}\n\n${data.formattedBody}`;
+      copyToClipboard(fullDraft, 'Draft copied! Paste into any email client.');
     });
   }
 }
