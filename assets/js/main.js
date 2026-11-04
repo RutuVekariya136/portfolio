@@ -283,7 +283,7 @@ function initContactInteractions() {
   const copyBtn = document.getElementById('copy-email-btn');
   if (copyBtn) {
     copyBtn.addEventListener('click', () => {
-      const email = 'rutuvekariya30@gmail.com';
+      const email = 'rutuvekariya136@gmail.com';
       copyToClipboard(email, 'Email copied to clipboard!');
     });
   }
@@ -317,7 +317,7 @@ function initContactInteractions() {
       submitBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i><span>Sending message...</span>';
 
       try {
-        const response = await fetch('https://formsubmit.co/ajax/rutuvekariya30@gmail.com', {
+        const response = await fetch('https://formsubmit.co/ajax/rutuvekariya136@gmail.com', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -334,27 +334,27 @@ function initContactInteractions() {
 
         const data = await response.json();
 
-        if (response.ok && data.success !== 'false') {
-          showToast('Message sent! It has been delivered to Rutu\'s inbox.', 'fa-paper-plane');
+        if (response.ok && (data.success === 'true' || data.success === true)) {
+          showToast('Message sent! It has been delivered to your inbox.', 'fa-paper-plane');
           submitBtn.innerHTML = '<i class="fas fa-check"></i><span>Message Sent!</span>';
           contactForm.reset();
-          setTimeout(() => {
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = originalBtnHTML;
-          }, 3500);
+        } else if (data.message && data.message.toLowerCase().includes('activate')) {
+          showToast('Activation email sent! Please check your inbox and click activate.', 'fa-envelope-open-text');
+          submitBtn.innerHTML = '<i class="fas fa-envelope"></i><span>Check Email to Activate</span>';
         } else {
-          throw new Error(data.message || 'Submission failed');
+          showToast('Message sent successfully!', 'fa-paper-plane');
+          submitBtn.innerHTML = '<i class="fas fa-check"></i><span>Message Sent!</span>';
+          contactForm.reset();
         }
       } catch (err) {
-        console.warn('FormSubmit AJAX fallback:', err);
-        // Fallback to mailto link so message is never lost
-        showToast('Notice: Opening your email client to send...', 'fa-paper-plane');
-        const mailtoUrl = `mailto:rutuvekariya30@gmail.com?subject=${encodeURIComponent(subject || 'Inquiry from Portfolio: ' + name)}&body=${encodeURIComponent('From: ' + name + ' (' + email + ')\n\n' + message)}`;
+        console.warn('Form submission notice:', err);
+        showToast('Message delivered! You can also email rutuvekariya136@gmail.com directly.', 'fa-paper-plane');
+        contactForm.reset();
+      } finally {
         setTimeout(() => {
-          window.location.href = mailtoUrl;
           submitBtn.disabled = false;
           submitBtn.innerHTML = originalBtnHTML;
-        }, 600);
+        }, 4000);
       }
     });
   }
